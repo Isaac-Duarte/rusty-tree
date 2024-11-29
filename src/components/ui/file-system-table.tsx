@@ -94,7 +94,7 @@ const FileSystemRow: React.FC<FileSystemRowProps> = ({
   return (
     <>
       <TableRow>
-        <TableCell>
+        <TableCell className="py-1 px-2">
           <div
             className="flex items-center"
             style={{ paddingLeft: `${depth * 20}px` }}
@@ -118,14 +118,14 @@ const FileSystemRow: React.FC<FileSystemRowProps> = ({
             {node.name}
           </div>
         </TableCell>
-        <TableCell>{formatSize(node.size)}</TableCell>
-        <TableCell>
+        <TableCell className="py-1 px-2">{formatSize(node.size)}</TableCell>
+        <TableCell className="py-1 px-2">
           <div className="w-full max-w-md">
             <Progress value={sizePercentage} className="w-full" />
           </div>
         </TableCell>
-        <TableCell>{node.num_files.toLocaleString()}</TableCell>
-        <TableCell>{node.num_dirs.toLocaleString()}</TableCell>
+        <TableCell className="py-1 px-2">{node.num_files.toLocaleString()}</TableCell>
+        <TableCell className="py-1 px-2">{node.num_dirs.toLocaleString()}</TableCell>
       </TableRow>
       {isExpanded &&
         (isLoading ? (
