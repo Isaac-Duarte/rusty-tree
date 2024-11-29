@@ -79,9 +79,9 @@ function App() {
           maxDepth: treeOptions?.maxDepth || undefined,
           minSize: treeOptions?.minSize || undefined,
         });
-      console.log(value);
-      setScanning(false);
+
       setNode(value.node);
+      setScanning(false);
       setDuration(formattedDuration(value.time_took_millis));
     }
   };
