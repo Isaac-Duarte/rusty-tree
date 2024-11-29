@@ -192,7 +192,7 @@ function App() {
             </Card>
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center mt-8 mb-2">
+          <div className="flex flex-col items-center justify-center mt-8 gap-2 ">
             <p className="text-xl mb-6">
               No directory selected. Please select a directory to begin.
             </p>
