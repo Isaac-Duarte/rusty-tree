@@ -24,14 +24,36 @@ import { invoke } from "@tauri-apps/api/core";
 import { Spinner } from "./components/ui/spinner";
 import { formattedDuration } from "./types/util";
 import FileSystemTable from "./components/ui/file-system-table";
-import { FileOutput, FileScan, FolderOpen } from "lucide-react";
+import { FileOutput, FolderOpen, RefreshCcw } from "lucide-react";
 import { ModeToggle } from "./components/mode-toggle";
+import { ScrollArea } from "./components/ui/scroll-area";
+import TreeControls from "./components/tree-controls";
 
 function App() {
   const [directory, setDirectory] = useState<string | undefined>();
   const [node, setNode] = useState<FileSystemNode | undefined>();
   const [scanning, setScanning] = useState(false);
   const [duration, setDuration] = useState<string | undefined>();
+
+  // Options for tree
+  const [treeOptions, setTreeOptions] = useState<{
+    maxDepth?: number;
+    minSize?: number;
+  }>();
+
+  const setMaxDepth = (maxDepth: number) => {
+    setTreeOptions({
+      ...treeOptions,
+      maxDepth,
+    });
+  };
+
+  const setMinSize = (minSize: number) => {
+    setTreeOptions({
+      ...treeOptions,
+      minSize,
+    });
+  };
 
   const handleSelectDirectory = async () => {
     const folder = await open({
@@ -42,6 +64,7 @@ function App() {
       setNode(undefined);
       setDirectory(folder);
       setDuration(undefined);
+      handleScan();
     }
   };
 
@@ -53,6 +76,8 @@ function App() {
       const value: { node: FileSystemNode; time_took_millis: number } =
         await invoke("read_recursive", {
           path: directory,
+          maxDepth: treeOptions?.maxDepth || undefined,
+          minSize: treeOptions?.minSize || undefined,
         });
       console.log(value);
       setScanning(false);
@@ -72,7 +97,7 @@ function App() {
                 <FolderOpen className="mr-2" /> Select Directory
               </MenubarItem>
               <MenubarItem onClick={handleScan} disabled={!directory}>
-                <FileScan className="mr-2" /> Scan
+                <RefreshCcw className="mr-2" /> Refresh
               </MenubarItem>
               <MenubarSub>
                 <MenubarSubTrigger>
@@ -109,43 +134,65 @@ function App() {
         </p>
       </header>
 
-      <main className="max-w-5xl mx-auto p-4">
+      <ScrollArea className="max-w-[calc(100vw-1rem)] mx-auto w-full">
         {directory ? (
-          <Card className="relative">
-            {scanning && (
-              <div className="absolute inset-0 bg-opacity-75 flex items-center justify-center">
-                <Spinner size="lg" color="primary" />
-              </div>
-            )}
-            <CardHeader>
-              <CardTitle className="text-2xl font-semibold">
-                Directory Information
-              </CardTitle>
-              <CardDescription className="mt-2">
-                <p>
-                  <strong>Directory:</strong> {directory}
-                </p>
-                {duration && node && (
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <>
+            <div className="mb-2 flex flex-row gap-2 items-end">
+              <Button
+                onClick={handleSelectDirectory}
+                disabled={!directory}
+                variant="default"
+                className="text-xl"
+              >
+                <FolderOpen className="w-10 h-10" />
+                Select Directory
+              </Button>
+
+              <Button
+                onClick={handleScan}
+                disabled={!directory}
+                variant="outline"
+                className="text-xl"
+              >
+                <RefreshCcw className="text-2xl" />
+                Refresh
+              </Button>
+
+              <TreeControls
+                maxDepth={treeOptions?.maxDepth || 0}
+                minSize={treeOptions?.minSize || 0}
+                maxDepthChanged={setMaxDepth}
+                minSizeChanged={setMinSize}
+              />
+            </div>
+            <Card className="relative">
+              {scanning && (
+                <div className="absolute inset-0 bg-opacity-75 flex items-center justify-center">
+                  <Spinner size="lg" color="primary" />
+                </div>
+              )}
+              <CardHeader>
+                <CardTitle className="text-2xl font-semibold flex flex-row gap-2">
+                  Directory Information
+                </CardTitle>
+                <CardDescription className="mt-2">
+                  <p>
+                    <strong>Directory:</strong> {directory}
+                  </p>
+                  {node && (
                     <p>
-                      <strong>Time Took:</strong> {duration}
+                      <strong>Scan Duration:</strong> {duration || "0ms"}
                     </p>
-                    <p>
-                      <strong>Total Files:</strong>{" "}
-                      {node.num_files.toLocaleString()}
-                    </p>
-                    <p>
-                      <strong>Total Directories:</strong>{" "}
-                      {node.num_dirs.toLocaleString()}
-                    </p>
-                  </div>
-                )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>{node && <FileSystemTable data={node} />}</CardContent>
-          </Card>
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {node && <FileSystemTable data={node} />}
+              </CardContent>
+            </Card>
+          </>
         ) : (
-          <div className="flex flex-col items-center justify-center mt-8">
+          <div className="flex flex-col items-center justify-center mt-8 mb-2">
             <p className="text-xl mb-6">
               No directory selected. Please select a directory to begin.
             </p>
@@ -156,9 +203,16 @@ function App() {
             >
               <FolderOpen className="mr-2" /> Select Directory
             </Button>
+
+            <TreeControls
+              maxDepth={treeOptions?.maxDepth || 0}
+              minSize={treeOptions?.minSize || 0}
+              maxDepthChanged={setMaxDepth}
+              minSizeChanged={setMinSize}
+            />
           </div>
         )}
-      </main>
+      </ScrollArea>
     </div>
   );
 }
