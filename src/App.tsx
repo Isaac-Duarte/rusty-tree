@@ -24,6 +24,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { Spinner } from "./components/ui/spinner";
 import { formattedDuration } from "./types/util";
 import FileSystemTable from "./components/ui/file-system-table";
+import { FileOutput, FileScan, FolderOpen } from "lucide-react";
+import { ModeToggle } from "./components/mode-toggle";
 
 function App() {
   const [directory, setDirectory] = useState<string | undefined>();
@@ -60,47 +62,49 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Menubar className="bg-white shadow">
-        <MenubarMenu>
-          <MenubarTrigger className="px-4 py-2 hover:bg-gray-100">
-            File
-          </MenubarTrigger>
-          <MenubarContent>
-            <MenubarItem onClick={handleSelectDirectory}>
-              {/* <FaFolderOpen className="mr-2" /> Select Directory */}
-            </MenubarItem>
-            <MenubarItem onClick={handleScan} disabled={!directory}>
-              {/* <FaPlay className="mr-2" /> Scan */}
-            </MenubarItem>
-            <MenubarSub>
-              <MenubarSubTrigger>
-                {/* <FaFileExport className="mr-2" /> Export */}
-              </MenubarSubTrigger>
-              <MenubarSubContent>
-                <MenubarItem
-                  onClick={() => {
-                    invoke("save_as_json", { prettyPrint: true });
-                  }}
-                >
-                  JSON (Pretty)
-                </MenubarItem>
-                <MenubarItem
-                  onClick={() => {
-                    invoke("save_as_json", { prettyPrint: false });
-                  }}
-                >
-                  JSON
-                </MenubarItem>
-              </MenubarSubContent>
-            </MenubarSub>
-          </MenubarContent>
-        </MenubarMenu>
-      </Menubar>
+    <div className="m-2">
+      <div className="flex flex-row justify-between gap-2">
+        <Menubar className="shadow w-full">
+          <MenubarMenu>
+            <MenubarTrigger className="px-4 py-2">File</MenubarTrigger>
+            <MenubarContent>
+              <MenubarItem onClick={handleSelectDirectory}>
+                <FolderOpen className="mr-2" /> Select Directory
+              </MenubarItem>
+              <MenubarItem onClick={handleScan} disabled={!directory}>
+                <FileScan className="mr-2" /> Scan
+              </MenubarItem>
+              <MenubarSub>
+                <MenubarSubTrigger>
+                  <FileOutput className="mr-2" /> Export
+                </MenubarSubTrigger>
+                <MenubarSubContent>
+                  <MenubarItem
+                    onClick={() => {
+                      invoke("save_as_json", { prettyPrint: true });
+                    }}
+                  >
+                    JSON (Pretty)
+                  </MenubarItem>
+                  <MenubarItem
+                    onClick={() => {
+                      invoke("save_as_json", { prettyPrint: false });
+                    }}
+                  >
+                    JSON
+                  </MenubarItem>
+                </MenubarSubContent>
+              </MenubarSub>
+            </MenubarContent>
+          </MenubarMenu>
+        </Menubar>
+
+        <ModeToggle />
+      </div>
 
       <header className="text-center my-8">
         <h1 className="text-4xl font-bold text-primary">Rusty Tree</h1>
-        <p className="text-gray-600 mt-2">
+        <p className="mt-2">
           Visualize and analyze your directory structure efficiently.
         </p>
       </header>
@@ -109,7 +113,7 @@ function App() {
         {directory ? (
           <Card className="relative">
             {scanning && (
-              <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
+              <div className="absolute inset-0 bg-opacity-75 flex items-center justify-center">
                 <Spinner size="lg" color="primary" />
               </div>
             )}
@@ -138,13 +142,11 @@ function App() {
                 )}
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              {node && <FileSystemTable data={node} />}
-            </CardContent>
+            <CardContent>{node && <FileSystemTable data={node} />}</CardContent>
           </Card>
         ) : (
           <div className="flex flex-col items-center justify-center mt-8">
-            <p className="text-xl text-gray-700 mb-6">
+            <p className="text-xl mb-6">
               No directory selected. Please select a directory to begin.
             </p>
             <Button
@@ -152,7 +154,7 @@ function App() {
               variant="outline"
               className="flex items-center px-6 py-3 text-lg"
             >
-              {/* <FaFolderOpen className="mr-2" /> Select Directory */}
+              <FolderOpen className="mr-2" /> Select Directory
             </Button>
           </div>
         )}
