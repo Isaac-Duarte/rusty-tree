@@ -60,11 +60,23 @@ function App() {
       multiple: false,
       directory: true,
     });
+
     if (folder) {
       setNode(undefined);
       setDirectory(folder);
       setDuration(undefined);
-      handleScan();
+      setScanning(true);
+
+      const value: { node: FileSystemNode; time_took_millis: number } =
+        await invoke("read_recursive", {
+          path: directory,
+          maxDepth: treeOptions?.maxDepth || undefined,
+          minSize: treeOptions?.minSize || undefined,
+        });
+
+      setNode(value.node);
+      setScanning(false);
+      setDuration(formattedDuration(value.time_took_millis));
     }
   };
 
@@ -73,6 +85,7 @@ function App() {
       setScanning(true);
       setNode(undefined);
       setDuration(undefined);
+
       const value: { node: FileSystemNode; time_took_millis: number } =
         await invoke("read_recursive", {
           path: directory,
