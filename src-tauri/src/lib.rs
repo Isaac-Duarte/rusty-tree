@@ -14,7 +14,11 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![file_tree::read_recursive, file_tree::get_node_by_id, file_tree::save_as_json])
+        .invoke_handler(tauri::generate_handler![
+            file_tree::read_recursive,
+            file_tree::get_node_by_id,
+            file_tree::save_as_json
+        ])
         .manage(Mutex::new(AppState::default()))
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
