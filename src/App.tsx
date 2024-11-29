@@ -106,17 +106,10 @@ function App() {
             <p>
               <b>Directory:</b> {directory}
             </p>
-            {duration && node && (
+            {node && (
               <span>
                 <p>
-                  <b>Time Took:</b> {duration}
-                </p>
-                <p>
-                  <b> Total Files: </b>
-                  {node.num_files.toLocaleString()}
-                </p>
-                <p>
-                  <b> Total Dirs:</b> {node.num_dirs.toLocaleString()}
+                  <b>Time Took:</b> {duration || "0ms"}
                 </p>
               </span>
             )}
