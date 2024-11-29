@@ -64,7 +64,7 @@ function App() {
   return (
     <div className="m-2">
       <div className="flex flex-row justify-between gap-2">
-        <Menubar className="shadow w-full">
+        <Menubar className="w-full border-primary">
           <MenubarMenu>
             <MenubarTrigger className="px-4 py-2">File</MenubarTrigger>
             <MenubarContent>
