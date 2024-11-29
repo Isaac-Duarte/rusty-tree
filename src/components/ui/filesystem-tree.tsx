@@ -28,7 +28,7 @@ const FileSystemTree: React.FC<FileSystemTreeProps> = ({ data, level = 0, parent
   const toggleOpen = () => setIsOpen(!isOpen);
 
   const renderIcon = () => {
-    if (data.type === 'folder') {
+    if (data.node_type === 'Directory') {
       return <Folder className="w-4 h-4 mr-2" />;
     }
     return <File className="w-4 h-4 mr-2" />;
@@ -51,7 +51,7 @@ const FileSystemTree: React.FC<FileSystemTreeProps> = ({ data, level = 0, parent
   const renderContent = () => (
     <div className="flex items-center py-1 w-full">
       <div className="flex items-center flex-grow">
-        {data.type === 'folder' && (
+        {data.node_type === 'Directory' && (
           <ChevronRight 
             className={`w-4 h-4 mr-1 transition-transform ${isOpen ? 'transform rotate-90' : ''}`} 
           />
@@ -72,7 +72,7 @@ const FileSystemTree: React.FC<FileSystemTreeProps> = ({ data, level = 0, parent
     <div style={{ marginLeft: `${indent}px` }}>
       <ContextMenu>
         <ContextMenuTrigger>
-          {data.type === 'folder' ? (
+          {data.node_type === 'Directory' ? (
             <Collapsible open={isOpen} onOpenChange={setIsOpen}>
               <CollapsibleTrigger asChild>
                 <div className="cursor-pointer" onClick={toggleOpen}>

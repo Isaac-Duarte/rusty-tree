@@ -1,7 +1,7 @@
 ﻿export interface FileSystemNode {
     name: string;
-    type: 'file' | 'folder';
     size: number;
+    node_type: 'File' | 'Directory';
     children?: FileSystemNode[];
   }
   
