@@ -1,20 +1,44 @@
 import "./App.css";
-import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { Input } from "@/components/ui/input";
+import FileSystemTree from '@/components/ui/filesystem-tree';
+import { FileSystemNode } from '@/types/filesystem';
 import { z } from "zod";
 import {  useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { invoke } from "@tauri-apps/api/core";
+  Menubar,
+  MenubarContent,
+  MenubarItem,
+  MenubarMenu,
+  MenubarTrigger,
+} from "@/components/ui/menubar"
+
+const sampleData: FileSystemNode = {
+  name: 'root',
+  type: 'folder',
+  size: 1024 * 1024 * 100,
+  children: [
+    {
+      name: 'Documents',
+      type: 'folder',
+      size: 1024 * 1024 * 50,
+      children: [
+        { name: 'report.pdf', type: 'file', size: 1024 * 1024 * 2 }, // 2 MB
+        { name: 'presentation.pptx', type: 'file', size: 1024 * 1024 * 5 }, // 5 MB
+      ],
+    },
+    {
+      name: 'Pictures',
+      type: 'folder',
+      size: 1024 * 1024 * 30,
+      children: [
+        { name: 'vacation.jpg', type: 'file', size: 1024 * 1024 * 3 }, // 3 MB
+        { name: 'family.png', type: 'file', size: 1024 * 1024 * 2 }, // 2 MB
+      ],
+    },
+    { name: 'notes.txt', type: 'file', size: 1024 * 10 }, // 10 KB
+  ],
+};
 
 const FormSchema = z.object({
   name: z.string().min(2, {
@@ -30,56 +54,44 @@ function App() {
     },
   });
 
-  const handleHelloWorldClick = () => {
+  const handleSelectDirectory = () => {
     toast({
-      title: "Hello Pendejo!",
-      description: "This is it, ShadCN & Tailwind mother fucka",
+      title: "Not Implemented",
+      description: "not Implemented",
     });
   };
 
-  const communicateToRust = async (data: z.infer<typeof FormSchema>) => {
-    const value: string = await invoke("greet", { name: data.name });
-
+  const handleScan = () => {
     toast({
-      title: value,
+      title: "Not Implemented",
+      description: "not Implemented",
     });
   };
 
   return (
-    <main className="container">
-      <h1 className="text-2xl text-center pt-2 text-primary">Hello</h1>
+<main className="container mx-auto p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+  <h1 className="p-3 text-left text-3xl font-bold text-primary dark:text-black">Rusty Tree</h1>
+  <Menubar className="p-3 text border-b border-gray-200 dark:border-gray-700 font-semibold">
+    <MenubarMenu>
+      <MenubarTrigger>File</MenubarTrigger>
+      <MenubarContent>
+        <MenubarItem>Export To JSON</MenubarItem>
+      </MenubarContent>
+    </MenubarMenu>
+  </Menubar>
 
-      <div className="flex justify-center flex-col gap-2 m items-center">
-        <Button onClick={handleHelloWorldClick} className="">
-          Hello World!
-        </Button>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(communicateToRust)}>
-            <div className="flex flex-row gap-2 items-center">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Input Name" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      This will send a message to rust
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button type="submit">Communicate to rust!</Button>
-            </div>
-          </form>
-        </Form>
-      </div>
-    </main>
+  <div className="px-4 mt-6 flex flex-wrap gap-4">
+    <button onClick={handleSelectDirectory} className="btn btn-primary">Select Directory</button>
+    <button onClick={handleScan} className="btn btn-secondary">Scan</button>
+  </div>
+  
+  <div className="px-4 py-10">
+    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Directory: {sampleData.name}</label>
+    <FileSystemTree 
+      data={sampleData} 
+    />
+  </div>
+</main>
   );
 }
 
