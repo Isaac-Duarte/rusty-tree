@@ -68,14 +68,14 @@ function App() {
           </MenubarTrigger>
           <MenubarContent>
             <MenubarItem onClick={handleSelectDirectory}>
-              <FaFolderOpen className="mr-2" /> Select Directory
+              {/* <FaFolderOpen className="mr-2" /> Select Directory */}
             </MenubarItem>
             <MenubarItem onClick={handleScan} disabled={!directory}>
-              <FaPlay className="mr-2" /> Scan
+              {/* <FaPlay className="mr-2" /> Scan */}
             </MenubarItem>
             <MenubarSub>
               <MenubarSubTrigger>
-                <FaFileExport className="mr-2" /> Export
+                {/* <FaFileExport className="mr-2" /> Export */}
               </MenubarSubTrigger>
               <MenubarSubContent>
                 <MenubarItem
@@ -152,7 +152,7 @@ function App() {
               variant="outline"
               className="flex items-center px-6 py-3 text-lg"
             >
-              <FaFolderOpen className="mr-2" /> Select Directory
+              {/* <FaFolderOpen className="mr-2" /> Select Directory */}
             </Button>
           </div>
         )}
