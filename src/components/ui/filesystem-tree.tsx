@@ -1,4 +1,4 @@
-﻿import React from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { File, Folder, ChevronRight, Copy, Trash, Edit, Download } from 'lucide-react';
 import { FileSystemNode } from '@/types/filesystem';
 import { Progress } from "@/components/ui/progress"
@@ -14,6 +14,7 @@ import {
   ContextMenuTrigger,
   ContextMenuLabel,
 } from "@/components/ui/context-menu"
+import { invoke } from '@tauri-apps/api/core';
 
 interface FileSystemTreeProps {
   data: FileSystemNode;
@@ -22,10 +23,27 @@ interface FileSystemTreeProps {
 }
 
 const FileSystemTree: React.FC<FileSystemTreeProps> = ({ data, level = 0, parentSize = 0 }) => {
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [children, setChildren] = useState<FileSystemNode[] | null>(data.children || null);
+  const [isLoading, setIsLoading] = useState(false);
   const indent = level * 20;
 
   const toggleOpen = () => setIsOpen(!isOpen);
+
+  useEffect(() => {
+    if (isOpen && !children && data.node_type === 'Directory') {
+      setIsLoading(true);
+      invoke<FileSystemNode>('get_node_by_id', { id: data.id })
+        .then((nodeData) => {
+          setChildren(nodeData.children || []);
+          setIsLoading(false);
+        })
+        .catch(error => {
+          console.error('Error fetching children:', error);
+          setIsLoading(false);
+        });
+    }
+  }, [isOpen]);
 
   const renderIcon = () => {
     if (data.node_type === 'Directory') {
@@ -80,9 +98,13 @@ const FileSystemTree: React.FC<FileSystemTreeProps> = ({ data, level = 0, parent
                 </div>
               </CollapsibleTrigger>
               <CollapsibleContent>
-                {data.children && data.children.map((child, index) => (
-                  <FileSystemTree key={index} data={child} level={level + 1} parentSize={data.size} />
-                ))}
+                {isLoading ? (
+                  <div className="pl-4">Loading...</div>
+                ) : (
+                  children && children.map((child) => (
+                    <FileSystemTree key={child.id} data={child} level={level + 1} parentSize={data.size} />
+                  ))
+                )}
               </CollapsibleContent>
             </Collapsible>
           ) : (
@@ -114,4 +136,3 @@ const FileSystemTree: React.FC<FileSystemTreeProps> = ({ data, level = 0, parent
 };
 
 export default FileSystemTree;
-

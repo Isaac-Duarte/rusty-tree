@@ -3,10 +3,16 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
+use std::sync::Mutex;
 use std::time::Instant;
+use tauri::State;
 
-#[derive(Debug, Serialize, Deserialize)]
+use crate::AppState;
+
+#[derive(Debug, Serialize, Clone)]
 pub struct FSNode {
+    pub id: u64,
     pub name: String,
     pub size: u64,
     pub node_type: FSNodeType,
@@ -15,15 +21,16 @@ pub struct FSNode {
     pub num_dirs: u64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum FSNodeType {
     File,
     Directory,
 }
 
 impl FSNode {
-    fn directory_node(name: String) -> Self {
+    fn directory_node(name: String, id: u64) -> Self {
         FSNode {
+            id,
             name,
             children: None,
             size: 0,
@@ -36,6 +43,60 @@ impl FSNode {
     fn size(&self) -> u64 {
         self.size
     }
+
+    pub fn get_node_by_id(&self, id: u64) -> Option<&FSNode> {
+        if self.id == id {
+            Some(self)
+        } else {
+            self.children.as_ref().and_then(|children| {
+                for child in children {
+                    if let Some(node) = child.get_node_by_id(id) {
+                        return Some(node);
+                    }
+                }
+                None
+            })
+        }
+    }
+
+    pub fn get_node_by_id_mut(&mut self, id: u64) -> Option<&mut FSNode> {
+        if self.id == id {
+            Some(self)
+        } else {
+            self.children.as_mut().and_then(|children| {
+                for child in children {
+                    if let Some(node) = child.get_node_by_id_mut(id) {
+                        return Some(node);
+                    }
+                }
+                None
+            })
+        }
+    }
+
+    pub fn clone_without_children(&self) -> Self {
+        FSNode {
+            id: self.id.clone(),
+            name: self.name.clone(),
+            size: self.size.clone(),
+            node_type: self.node_type.clone(),
+            children: None,
+            num_files: self.num_files.clone(),
+            num_dirs: self.num_dirs.clone(),
+        }
+    }
+
+    pub fn clone_only_direct_children(&self) -> Self {
+        let mut node = self.clone_without_children();
+        node.children = self.children.as_ref().map(|children| {
+            children
+                .iter()
+                .map(|child| child.clone_without_children())
+                .collect()
+        });
+
+        node
+    }
 }
 
 #[derive(Serialize)]
@@ -45,27 +106,48 @@ pub struct Response {
 }
 
 #[tauri::command(async)]
-pub fn read_recursive(path: &str) -> Response {
+pub fn read_recursive(path: &str, state: State<'_, Mutex<AppState>>) -> Response {
     let instant = Instant::now();
 
-    let node = read_recursive_inner(&PathBuf::from(path), false);
+    let counter = AtomicU64::new(0);
+    let node = read_recursive_inner(&PathBuf::from(path), false, &counter);
 
     let time_passed = instant.elapsed().as_millis();
 
+    let direct_children_node = node.clone_only_direct_children();
+
+    if let Ok(mut state) = state.lock() {
+        state.node = Some(node);
+    }
+
     Response {
-        node,
+        node: direct_children_node,
         time_took_millis: time_passed,
     }
 }
 
-fn read_recursive_inner(path: &Path, follow_symlinks: bool) -> FSNode {
+#[tauri::command(async)]
+pub fn get_node_by_id(id: u64, state: State<'_, Mutex<AppState>>) -> Option<FSNode> {
+    if let Ok(state) = state.lock() {
+        if let Some(node) = state.node.as_ref() {
+            if let Some(found_node) = node.get_node_by_id(id) {
+                return Some(found_node.clone_only_direct_children());
+            }
+        }
+    }
+
+    None
+}
+
+fn read_recursive_inner(path: &Path, follow_symlinks: bool, counter: &AtomicU64) -> FSNode {
     let name = path
         .file_name()
         .unwrap_or(path.as_os_str())
         .to_string_lossy()
         .to_string();
 
-    let mut node = FSNode::directory_node(name);
+    let id = counter.fetch_add(1, AtomicOrdering::SeqCst);
+    let mut node = FSNode::directory_node(name, id);
 
     let entries: Vec<_> = match fs::read_dir(path) {
         Ok(entries) => entries.collect(),
@@ -86,7 +168,7 @@ fn read_recursive_inner(path: &Path, follow_symlinks: bool) -> FSNode {
 
     let file_nodes: Vec<_> = files
         .par_iter()
-        .map(|entry| {
+        .filter_map(|entry| {
             let entry = entry.as_ref().unwrap();
             let path = entry.path();
             let name = entry.file_name().to_string_lossy().to_string();
@@ -98,6 +180,7 @@ fn read_recursive_inner(path: &Path, follow_symlinks: bool) -> FSNode {
             let meta = meta.ok()?;
             if !name.is_empty() && meta.len() > 0 {
                 Some(FSNode {
+                    id: counter.fetch_add(1, AtomicOrdering::SeqCst),
                     name,
                     children: None,
                     size: meta.len(),
@@ -109,7 +192,6 @@ fn read_recursive_inner(path: &Path, follow_symlinks: bool) -> FSNode {
                 None
             }
         })
-        .flatten()
         .collect();
 
     node.size += file_nodes.iter().map(|node| node.size).sum::<u64>();
@@ -117,7 +199,7 @@ fn read_recursive_inner(path: &Path, follow_symlinks: bool) -> FSNode {
 
     let dir_nodes: Vec<_> = dirs
         .par_iter()
-        .map(|entry| {
+        .filter_map(|entry| {
             let entry = entry.as_ref().unwrap();
             let path = entry.path();
 
@@ -128,12 +210,11 @@ fn read_recursive_inner(path: &Path, follow_symlinks: bool) -> FSNode {
             };
             let meta = meta.ok()?;
             if meta.is_dir() {
-                Some(read_recursive_inner(&path, follow_symlinks))
+                Some(read_recursive_inner(&path, follow_symlinks, counter))
             } else {
                 None
             }
         })
-        .flatten()
         .collect();
 
     node.size += dir_nodes.iter().map(|node| node.size()).sum::<u64>();
