@@ -1,6 +1,10 @@
 import "./App.css";
+<<<<<<< HEAD
 import { toast } from "@/hooks/use-toast";
 import { FileSystemTable } from '@/components/ui/file-system-table'
+=======
+import FileSystemTree from "@/components/ui/filesystem-tree";
+>>>>>>> 71ee0c25d8204674e062e879ea54c886e7e1ad26
 import {
   Menubar,
   MenubarContent,
@@ -9,15 +13,13 @@ import {
   MenubarTrigger,
 } from "@/components/ui/menubar";
 import { Button } from "./components/ui/button";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { dir } from "console";
+import { useState } from "react";
 import { FileSystemNode } from "./types/filesystem";
 import { open } from "@tauri-apps/plugin-dialog";
 import { Card, CardContent, CardHeader } from "./components/ui/card";
 
 import { invoke } from "@tauri-apps/api/core";
 import { Spinner } from "./components/ui/spinner";
-import { ScrollArea } from "./components/ui/scroll-area";
 import { formattedDuration } from "./types/util";
 
 function App() {

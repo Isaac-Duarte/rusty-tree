@@ -163,7 +163,7 @@ fn read_recursive_inner(path: &Path, follow_symlinks: bool, counter: &AtomicU64)
         } else {
             entry.as_ref().unwrap().metadata()
         };
-        meta.unwrap().is_file()
+        meta.map(|meta| meta.is_file()).unwrap_or_default()
     });
 
     let file_nodes: Vec<_> = files
