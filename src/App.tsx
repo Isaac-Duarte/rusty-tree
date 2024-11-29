@@ -1,6 +1,6 @@
 import "./App.css";
 import { toast } from "@/hooks/use-toast";
-import FileSystemTree from "@/components/ui/filesystem-tree";
+import { FileSystemTable } from '@/components/ui/file-system-table'
 import {
   Menubar,
   MenubarContent,
@@ -101,7 +101,7 @@ function App() {
           </CardHeader>
 
           <CardContent>
-            {node && <FileSystemTree data={node} />}
+            {node && <FileSystemTable data={node} />}
             {scanning && <Spinner size="md" color="primary" />}
           </CardContent>
         </Card>

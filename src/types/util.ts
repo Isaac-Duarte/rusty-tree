@@ -12,4 +12,9 @@ export const formattedDuration = (durationMs: number): string => {
   
     return `${formattedHrs}${formattedMin}${formattedSec}${formattedMs}`.trim();
   };
-  
+export const formatSize = (size: number): string => {
+  if (size < 1024) return `${size} B`;
+  const i = Math.floor(Math.log(size) / Math.log(1024));
+  const sizes = ['KB', 'MB', 'GB', 'TB'];
+  return `${(size / Math.pow(1024, i)).toFixed(2)} ${sizes[i - 1]}`;
+};
