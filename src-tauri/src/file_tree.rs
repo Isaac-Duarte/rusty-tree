@@ -1,12 +1,14 @@
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
-use std::fs;
+use std::fs::{self, File};
+use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 use std::sync::Mutex;
 use std::time::Instant;
-use tauri::State;
+use tauri::{AppHandle, State};
+use tauri_plugin_dialog::DialogExt;
 
 use crate::AppState;
 
@@ -137,6 +139,32 @@ pub fn get_node_by_id(id: u64, state: State<'_, Mutex<AppState>>) -> Option<FSNo
     }
 
     None
+}
+
+#[tauri::command(async)]
+pub fn save_as_json(pretty_print: bool, state: State<'_, Mutex<AppState>>, app_handle: AppHandle) {
+    if let Ok(state) = state.lock() {
+        if let Some(node) = state.node.clone() {
+            app_handle
+                .dialog()
+                .file()
+                .add_filter("node.json", &["json"])
+                .save_file(move |file| {
+                    if let Some(file) = file {
+                        let file = File::create(file.to_string()).unwrap();
+                        let mut writer = BufWriter::new(file);
+
+                        if pretty_print {
+                            serde_json::to_writer_pretty(&mut writer, &node).unwrap();
+                        }
+                        else {
+                            serde_json::to_writer(&mut writer, &node).unwrap();
+                        }
+                        writer.flush().unwrap();
+                    }
+                });
+        }
+    }
 }
 
 fn read_recursive_inner(path: &Path, follow_symlinks: bool, counter: &AtomicU64) -> FSNode {

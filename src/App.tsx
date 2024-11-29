@@ -5,6 +5,9 @@ import {
   MenubarContent,
   MenubarItem,
   MenubarMenu,
+  MenubarSub,
+  MenubarSubContent,
+  MenubarSubTrigger,
   MenubarTrigger,
 } from "@/components/ui/menubar";
 import { Button } from "./components/ui/button";
@@ -48,6 +51,8 @@ function App() {
           path: directory,
         });
 
+      console.log(value);
+
       setScanning(false);
       setNode(value.node);
       setDuration(formattedDuration(value.time_took_millis));
@@ -60,7 +65,26 @@ function App() {
         <MenubarMenu>
           <MenubarTrigger className="border">File</MenubarTrigger>
           <MenubarContent>
-            <MenubarItem>Export To JSON</MenubarItem>
+            <MenubarSub>
+              <MenubarSubTrigger>Export</MenubarSubTrigger>
+              <MenubarSubContent>
+                <MenubarItem
+                  onClick={() => {
+                    invoke("save_as_json", { prettyPrint: true });
+                  }}
+                >
+                  JSON (Pretty)
+                </MenubarItem>
+
+                <MenubarItem
+                  onClick={() => {
+                    invoke("save_as_json", { prettyPrint: false });
+                  }}
+                >
+                  JSON
+                </MenubarItem>
+              </MenubarSubContent>
+            </MenubarSub>
           </MenubarContent>
         </MenubarMenu>
       </Menubar>
