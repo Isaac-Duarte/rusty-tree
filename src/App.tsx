@@ -69,7 +69,7 @@ function App() {
 
       const value: { node: FileSystemNode; time_took_millis: number } =
         await invoke("read_recursive", {
-          path: directory,
+          path: folder,
           maxDepth: treeOptions?.maxDepth || undefined,
           minSize: treeOptions?.minSize || undefined,
         });
