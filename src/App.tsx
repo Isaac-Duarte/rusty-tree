@@ -108,11 +108,10 @@ function App() {
         </p>
       </header>
 
-      {/* Main Content */}
+      {/* Content */}
       <main className="max-w-5xl mx-auto p-4">
         {directory ? (
           <Card className="relative">
-            {/* Spinner Overlay */}
             {scanning && (
               <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
                 <Spinner size="lg" color="primary" />
@@ -148,8 +147,8 @@ function App() {
             </CardContent>
           </Card>
         ) : (
-          /* Placeholder when no directory is selected */
-          <div className="flex flex-col items-center justify-center mt-0">
+          /* no directory selected */
+          <div className="flex flex-col items-center justify-center mt-8">
             <p className="text-xl text-gray-700 mb-6">
               No directory selected. Please select a directory to begin.
             </p>
