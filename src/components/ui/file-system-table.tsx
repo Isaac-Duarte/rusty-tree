@@ -9,6 +9,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { Progress } from "@/components/ui/progress";
 import { ChevronRight, ChevronDown, File, Folder } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
@@ -64,6 +70,21 @@ const FileSystemRow: React.FC<FileSystemRowProps> = ({
     setIsExpanded(!isExpanded);
   };
 
+  const handleContextMenuAction = async (action: string) => {
+    switch (action) {
+      case 'delete':
+        break;
+      case 'rename':
+        break;
+      case 'reveal':
+        await invoke("open_in_file_explorer", { id: node.id });
+        break;
+      default:
+        console.log(`Unknown action: ${action}`);
+      }
+    };
+    
+
   useEffect(() => {
     if (isExpanded && !children && node.node_type === "Directory") {
       setIsLoading(true);
@@ -93,6 +114,8 @@ const FileSystemRow: React.FC<FileSystemRowProps> = ({
 
   return (
     <>
+  <ContextMenu>
+    <ContextMenuTrigger asChild>
       <TableRow>
         <TableCell className="py-1 px-2">
           <div
@@ -127,6 +150,25 @@ const FileSystemRow: React.FC<FileSystemRowProps> = ({
         <TableCell className="py-1 px-2">{node.num_files.toLocaleString()}</TableCell>
         <TableCell className="py-1 px-2">{node.num_dirs.toLocaleString()}</TableCell>
       </TableRow>
+    </ContextMenuTrigger>
+    <ContextMenuContent className="w-64">
+      <ContextMenuItem disabled>
+        <span>{node.name}</span>
+      </ContextMenuItem>
+      <ContextMenuItem onSelect={() => handleContextMenuAction('rename')}>
+        <span>Rename</span>
+      </ContextMenuItem>
+      <ContextMenuItem onSelect={() => handleContextMenuAction('reveal')}>
+        <span>Reveal in Explorer</span>
+      </ContextMenuItem>
+      <ContextMenuItem
+        onSelect={() => handleContextMenuAction('delete')}
+        className="text-red-600"
+      >
+        <span>Delete</span>
+      </ContextMenuItem>
+    </ContextMenuContent>
+  </ContextMenu>
       {isExpanded &&
         (isLoading ? (
           <TableRow>
@@ -160,5 +202,6 @@ const FileSystemRow: React.FC<FileSystemRowProps> = ({
     </>
   );
 };
+
 
 export default FileSystemTable;

@@ -17,7 +17,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             file_tree::read_recursive,
             file_tree::get_node_by_id,
-            file_tree::save_as_json
+            file_tree::save_as_json,
+            file_tree::open_in_file_explorer
         ])
         .manage(Mutex::new(AppState::default()))
         .run(tauri::generate_context!())
