@@ -18,7 +18,6 @@ use crate::AppState;
 pub struct FSNode {
     pub id: u64,
     pub name: String,
-    pub full_path: String,
     pub size: u64,
     pub node_type: FSNodeType,
     pub children: Option<Vec<FSNode>>,
@@ -36,11 +35,10 @@ pub enum FSNodeType {
 }
 
 impl FSNode {
-    fn directory_node(name: String, id: u64, full_path: String) -> Self {
+    fn directory_node(name: String, id: u64) -> Self {
         FSNode {
             id,
             name,
-            full_path,
             children: None,
             size: 0,
             node_type: FSNodeType::Directory,
@@ -88,7 +86,6 @@ impl FSNode {
         FSNode {
             id: self.id.clone(),
             name: self.name.clone(),
-            full_path: self.full_path.clone(),
             size: self.size.clone(),
             node_type: self.node_type.clone(),
             children: None,
@@ -108,6 +105,32 @@ impl FSNode {
         });
 
         node
+    }
+
+    pub fn get_full_path(&self, target_id: u64) -> Option<String> {
+        let mut path = Vec::new();
+        if self.build_path(target_id, &mut path) {
+            path.reverse();
+            Some(path.join(std::path::MAIN_SEPARATOR.to_string().as_str()))
+        } else {
+            None
+        }
+    }
+
+    fn build_path(&self, target_id: u64, path: &mut Vec<String>) -> bool {
+        if self.id == target_id {
+            path.push(self.name.clone());
+            return true;
+        }
+        if let Some(children) = &self.children {
+            for child in children {
+                if child.build_path(target_id, path) {
+                    path.push(self.name.clone());
+                    return true;
+                }
+            }
+        }
+        false
     }
 }
 
@@ -140,15 +163,17 @@ pub fn read_recursive(
     let instant = Instant::now();
 
     let counter = AtomicU64::new(0);
-    let node = match read_recursive_inner(&PathBuf::from(path), &counter, &options, 0) {
+    let mut node = match read_recursive_inner(&PathBuf::from(path), &counter, &options, 0) {
         Some(node) => node,
         None => {
             return Response {
-                node: FSNode::directory_node("".to_string(), 0, "".to_string()),
+                node: FSNode::directory_node("".to_string(), 0),
                 time_took_millis: instant.elapsed().as_millis(),
             };
         }
     };
+
+    node.name = path.to_string();
 
     let time_passed = instant.elapsed().as_millis();
 
@@ -215,7 +240,7 @@ fn read_recursive_inner(
         .to_string();
 
     let id = counter.fetch_add(1, AtomicOrdering::SeqCst);
-    let mut node = FSNode::directory_node(name, id, path.to_string_lossy().to_string());
+    let mut node = FSNode::directory_node(name, id);
     node.depth = depth;
 
     let reached_max_depth = if let Some(max) = options.max_depth {
@@ -263,7 +288,6 @@ fn read_recursive_inner(
                 Some(FSNode {
                     id: counter.fetch_add(1, AtomicOrdering::SeqCst),
                     name,
-                    full_path: path.to_string_lossy().to_string(),
                     children: None,
                     size: meta.len(),
                     node_type: FSNodeType::File,
@@ -334,9 +358,12 @@ fn biggest_size_first(lhs: &FSNode, rhs: &FSNode) -> Ordering {
 #[tauri::command(async)]
 pub fn open_in_file_explorer(id: u64, state: State<'_, Mutex<AppState>>, app_handle: AppHandle) {
     if let Ok(state) = state.lock() {
-        if let Some(node) = state.node.as_ref().and_then(|n| n.get_node_by_id(id)) {
-            let path = &node.full_path;
-            if std::fs::metadata(path).is_ok() {
+        if let Some(path) = state.node.as_ref().and_then(|n| n.get_full_path(id)) {
+            let path_buf = PathBuf::from(&path);
+
+            if path_buf.is_file() {
+                app_handle.shell().open(path, None).unwrap();
+            } else {
                 app_handle.shell().open(path, None).unwrap();
             }
         }

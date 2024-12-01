@@ -92,7 +92,7 @@ function App() {
           maxDepth: treeOptions?.maxDepth || undefined,
           minSize: treeOptions?.minSize || undefined,
         });
-
+        console.log(value);
       setNode(value.node);
       setScanning(false);
       setDuration(formattedDuration(value.time_took_millis));
@@ -189,9 +189,6 @@ function App() {
                   Directory Information
                 </CardTitle>
                 <CardDescription className="mt-2">
-                  <p>
-                    <strong>Directory:</strong> {directory}
-                  </p>
                   {node && (
                     <p>
                       <strong>Scan Duration:</strong> {duration || "0ms"}
